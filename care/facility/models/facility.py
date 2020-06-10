@@ -5,9 +5,10 @@ from location_field.models.spatial import LocationField
 from partial_index import PQ, PartialIndex
 from simple_history.models import HistoricalRecords
 
-from care.facility.models import FacilityBaseModel, phone_number_regex
+from care.facility.models import FacilityBaseModel, phone_number_regex, reverse_choices
 from care.facility.models.mixins.permissions.facility import FacilityPermissionMixin, FacilityRelatedPermissionMixin
 from care.users.models import District, LocalBody, State
+
 
 User = get_user_model()
 
@@ -48,7 +49,11 @@ FACILITY_TYPES = [
     (950, "Corona Testing Labs"),
     # Use 10xx for Corona Care Center
     (1000, "Corona Care Centre"),
+    # Use 11xx for First Line Treatment Centre
+    (1100, "First Line Treatment Centre"),
 ]
+
+REVERSE_FACILITY_TYPES = reverse_choices(FACILITY_TYPES)
 
 DOCTOR_TYPES = [
     (1, "General Medicine"),
@@ -104,6 +109,19 @@ class Facility(FacilityBaseModel, FacilityPermissionMixin):
 
         if is_create:
             FacilityUser.objects.create(facility=self, user=self.created_by, created_by=self.created_by)
+
+    CSV_MAPPING = {
+        "name": "Facility Name",
+        "facility_type": "Facility Type",
+        "address": "Address",
+        "local_body__name": "Local Body",
+        "district__name": "District",
+        "state__name": "State",
+        "oxygen_capacity": "Oxygen Capacity",
+        "phone_number": "Phone Number",
+    }
+
+    CSV_MAKE_PRETTY = {"facility_type": (lambda x: REVERSE_FACILITY_TYPES[x])}
 
 
 class FacilityLocalGovtBody(models.Model):
@@ -281,3 +299,9 @@ class FacilityUser(models.Model):
     facility = models.ForeignKey(Facility, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="created_users")
+
+    class Meta:
+        unique_together = (
+            "facility",
+            "user",
+        )

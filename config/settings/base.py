@@ -92,6 +92,7 @@ THIRD_PARTY_APPS = [
     "maintenance_mode",
     "django.contrib.postgres",
     "django_celery_beat",
+    "django_rest_passwordreset",
 ]
 
 LOCAL_APPS = ["care.users.apps.UsersConfig", "care.facility"]
@@ -300,7 +301,6 @@ REST_FRAMEWORK = {
 
 
 ACCOUNT_EMAIL_VERIFICATION = False
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 LOGOUT_REDIRECT_URL = "/"
 STAFF_ACCOUNT_TYPE = 10
 
@@ -357,5 +357,19 @@ CELERY_TASK_TIME_LIMIT = 5 * 60
 # TODO: set to whatever value is adequate in your circumstances
 CELERY_TASK_SOFT_TIME_LIMIT = 60
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#beat-scheduler
-# CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+# CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseSc:wqheduler"
+
+
+CSV_REQUEST_PARAMETER = "csv"
+
+
+DEFAULT_FROM_EMAIL = env("EMAIL_FROM", default="Coronasafe network <care@coronasafe.network>")
+
+CURRENT_DOMAIN = env("CURRENT_DOMAIN", default="localhost:8000")
+
+DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = True
+
+DJANGO_REST_MULTITOKENAUTH_RESET_TOKEN_EXPIRY_TIME = 1
+
+DJANGO_REST_LOOKUP_FIELD = "username"
 

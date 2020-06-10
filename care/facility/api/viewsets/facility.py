@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db import transaction
 from django.db.models.query_utils import Q
 from django_filters import rest_framework as filters
+from djqscsv import render_to_csv_response
 from dry_rest_permissions.generics import DRYPermissionFiltersBase, DRYPermissions
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -33,12 +35,14 @@ class FacilityFilter(filters.FilterSet):
 
 class FacilityQSPermissions(DRYPermissionFiltersBase):
     def filter_queryset(self, request, queryset, view):
-        if request.user.is_superuser or request.query_params.get("all") == "true":
+        if request.user.is_superuser:
             pass
         elif request.user.user_type >= User.TYPE_VALUE_MAP["DistrictLabAdmin"]:
             queryset = queryset.filter(district=request.user.district)
+        elif request.user.user_type >= User.TYPE_VALUE_MAP["StateLabAdmin"]:
+            queryset = queryset.filter(state=request.user.state)
         else:
-            queryset = queryset.filter(Q(created_by=request.user) | Q(users__id__exact=request.user.id))
+            queryset = queryset.filter(users__id__exact=request.user.id)
 
         search_text = request.query_params.get("search_text")
         if search_text:
@@ -91,6 +95,12 @@ class FacilityViewSet(viewsets.ModelViewSet):
         - `all` - bool. Returns all facilities with a limited dataset, accessible to all users.
         - `search_text` - string. Searches across name, district name and state name.
         """
+        if settings.CSV_REQUEST_PARAMETER in request.GET:
+            queryset = self.filter_queryset(self.get_queryset()).values(*Facility.CSV_MAPPING.keys())
+            return render_to_csv_response(
+                queryset, field_header_map=Facility.CSV_MAPPING, field_serializer_map=Facility.CSV_MAKE_PRETTY
+            )
+
         return super(FacilityViewSet, self).list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
@@ -205,9 +215,9 @@ class FacilityViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=["get"], detail=True)
-    def patients(self, *args, **kwargs):
-        queryset = PatientRegistration.objects.filter(facility_id=kwargs["pk"]).select_related(
-            "local_body", "district", "state"
-        )
-        return self.get_paginated_response(PatientListSerializer(self.paginate_queryset(queryset), many=True).data)
+    # @action(methods=["get"], detail=True)
+    # def patients(self, *args, **kwargs):
+    #     queryset = PatientRegistration.objects.filter(facility_id=kwargs["pk"]).select_related(
+    #         "local_body", "district", "state"
+    #     )
+    #     return self.get_paginated_response(PatientListSerializer(self.paginate_queryset(queryset), many=True).data)
