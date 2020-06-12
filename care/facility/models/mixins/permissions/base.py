@@ -1,4 +1,5 @@
-from care.facility.models import User
+# from care.facility.models import User
+from care.users.models import User
 
 
 class BasePermissionMixin:
