@@ -45,6 +45,8 @@ class ICMRSpecimenInformationSerializer(serializers.ModelSerializer):
     lab_name = serializers.CharField()
     lab_pincode = serializers.CharField()
 
+    icmr_category = ChoiceField(choices=PatientSampleICMR.PATIENT_ICMR_CATEGORY, required=False)
+
     class Meta:
         model = PatientSampleICMR
         fields = (
@@ -54,6 +56,7 @@ class ICMRSpecimenInformationSerializer(serializers.ModelSerializer):
             "is_repeated_sample",
             "lab_name",
             "lab_pincode",
+            "icmr_category",
         )
 
 
@@ -112,6 +115,7 @@ class ICMRMedicalConditionSerializer(serializers.ModelSerializer):
     hospitalization_date = serializers.DateField()
     hospital_phone_number = serializers.CharField(source="consultation.facility.phone_number")
     hospital_name = serializers.CharField(source="consultation.facility.name")
+    hospital_pincode = serializers.CharField(source="consultation.facility.pincode")
 
     medical_conditions = serializers.ListSerializer(child=ChoiceField(choices=DISEASE_CHOICES))
 
@@ -134,6 +138,7 @@ class ICMRMedicalConditionSerializer(serializers.ModelSerializer):
             "is_unusual_course",
             "hospital_phone_number",
             "hospital_name",
+            "hospital_pincode",
             "doctor_name",
         )
 
